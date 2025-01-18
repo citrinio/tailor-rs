@@ -1,0 +1,12 @@
+[package]
+name = "edge_slot"
+version = "1.0.0"
+edition = "2025"
+type = "bin" # Default
+src = ["src/*.c"] # Default
+include = ["src/"] # Default
+
+[dependencies]
+zephyr = "3.5.0"
+lib_snmp = "1.0.0"
+lib_wps = { version = "1.0.0", git = "https://github.com/citrinio/lib_wps.git" }

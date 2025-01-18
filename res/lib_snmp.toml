@@ -1,0 +1,10 @@
+[package]
+name = "lib_snmp"
+version = "1.0.0"
+edition = "2025"
+type = "lib"
+src = ["src/*.c"] # Default
+include = ["src/"] # Default
+
+[dependencies]
+zephyr = "3.5.0"

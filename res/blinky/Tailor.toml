@@ -1,0 +1,9 @@
+[package]
+name = "blinky"
+version = "0.1.0"
+edition = "2025.1"
+
+[dependencies]
+zephyr = "3.5.0"
+rand = { version = "1.0.0", path = "../rand" }
+backpack = { version = "1.0.0", git = "https://github.com/matheuswhite/backpack.git" }
