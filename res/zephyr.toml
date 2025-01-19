@@ -13,6 +13,6 @@ include = []
 
 [commands]
 build = "west build -p -b $board"
-run = "west flash"
 clean = "rm -rf build"
+run = "west flash"
 debug = "west debug"
