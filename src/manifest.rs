@@ -1,8 +1,11 @@
-use std::path::{Path, PathBuf};
-
+use sha2::{Digest, Sha256};
+use std::{
+    os::unix::ffi::OsStrExt,
+    path::{Path, PathBuf},
+};
 use toml::{map::Map, Table, Value};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct Manifest {
     name: String,
     version: String,
@@ -13,13 +16,13 @@ pub struct Manifest {
     include: Vec<String>,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum Edition {
     #[default]
     Edition2025_1,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum PackageType {
     #[default]
     Binary,
@@ -27,7 +30,7 @@ pub enum PackageType {
     SDK,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Dependency {
     Package {
         name: String,
@@ -56,6 +59,43 @@ fn ord(i: usize) -> String {
 }
 
 impl Manifest {
+    pub fn hash(&self) -> Vec<u8> {
+        let mut hasher = Sha256::new();
+        hasher.update(&self.name);
+        hasher.update(&self.version);
+        hasher.update([self.edition as u8]);
+        for dependency in &self.dependencies {
+            hasher.update(dependency.hash());
+        }
+        for src in &self.src {
+            hasher.update(src);
+        }
+        for include in &self.include {
+            hasher.update(include);
+        }
+        hasher.finalize().to_vec()
+    }
+
+    pub fn dependencies(&self) -> &[Dependency] {
+        &self.dependencies
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn package_type(&self) -> PackageType {
+        self.package_type
+    }
+
+    pub fn src(&self) -> &[String] {
+        &self.src
+    }
+
+    pub fn include(&self) -> &[String] {
+        &self.include
+    }
+
     pub fn from_folder(folder: &Path) -> Result<Self, String> {
         if !folder.is_dir() {
             return Err(format!("Isn't a directory: {:?}", folder));
@@ -190,12 +230,42 @@ impl Manifest {
 }
 
 impl Dependency {
-    fn name(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
             Dependency::Package { name, .. } => name.to_owned(),
             Dependency::Git { name, .. } => name.to_owned(),
             Dependency::Local { name, .. } => name.to_owned(),
         }
+    }
+
+    fn hash(&self) -> Vec<u8> {
+        let mut hasher = Sha256::new();
+        match self {
+            Dependency::Package { name, version } => {
+                hasher.update(name);
+                hasher.update(version);
+            }
+            Dependency::Git {
+                name,
+                repo,
+                version,
+                revision,
+            } => {
+                hasher.update(name);
+                hasher.update(repo);
+                if let Some(version) = version {
+                    hasher.update(version);
+                }
+                if let Some(revision) = revision {
+                    hasher.update(revision);
+                }
+            }
+            Dependency::Local { name, path } => {
+                hasher.update(name);
+                hasher.update(path.as_os_str().as_bytes());
+            }
+        }
+        hasher.finalize().to_vec()
     }
 }
 

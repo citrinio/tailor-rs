@@ -12,6 +12,20 @@ name = \"$name\"
 version = \"0.1.0\"
 edition = \"2025.1\"
 ";
+
+    pub const CMAKE: &'static str = "cmake_minimum_required(VERSION 3.5)
+project($name)
+
+file(GLOB_RECURSE SOURCES 
+$src
+)
+
+add_executable($name ${SOURCES})
+target_compile_options($name PUBLIC -Wall)
+target_include_directories($name PUBLIC
+$include
+)
+";
 }
 
 pub mod library {
